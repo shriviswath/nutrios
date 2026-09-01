@@ -1,4 +1,3 @@
-# nutrios
 # Nutri OS
 
 A local-first calorie, macro and weight tracker built around one idea:
