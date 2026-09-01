@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+# nutrios
 # Nutri OS
 
 A local-first calorie, macro and weight tracker built around one idea:
@@ -239,6 +239,3 @@ macros against its calorie figure.
 ## Licence
 
 MIT.
-=======
-# nutrios
->>>>>>> a1760e9a3ff91aa23d48b487b201f62dea0a7665
