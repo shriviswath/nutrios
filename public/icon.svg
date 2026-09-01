@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Nutri OS">
+  <rect width="64" height="64" rx="14" fill="#15232b"/>
+  <rect x="10" y="26" width="44" height="14" rx="3" fill="none" stroke="#7d8f99" stroke-width="2"/>
+  <rect x="12" y="28" width="26" height="10" fill="#b26a00"/>
+  <g stroke="#eaedef" stroke-width="1.4" opacity="0.5">
+    <path d="M21 26v14M32 26v14M43 26v14"/>
+  </g>
+  <path d="M10 20h44" stroke="#7d8f99" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <path d="M10 48h30" stroke="#7d8f99" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+</svg>

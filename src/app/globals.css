@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+/*
+  Visual direction: an instrument panel, not a wellness app.
+  Cool enamel background, ink-navy type, and a turmeric accent reserved for energy —
+  the one number the whole screen exists to report. Data is set in a monospaced face so
+  digits align in columns and can be compared at a glance; everything else is Plex Sans.
+*/
+
+@theme {
+  --color-bg: #eaedef;
+  --color-surface: #ffffff;
+  --color-sunken: #f2f5f6;
+  --color-ink: #15232b;
+  --color-muted: #5f727c;
+  --color-line: #d5dce0;
+  --color-energy: #b26a00;
+  --color-protein: #1b6b52;
+  --color-carb: #2b5c8f;
+  --color-fat: #7c4a78;
+  --color-warn: #a6301f;
+  --color-ok: #2f6b3c;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "IBM Plex Mono", "Roboto Mono", "DejaVu Sans Mono", monospace;
+
+  --radius-card: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-bg: #101619;
+    --color-surface: #182127;
+    --color-sunken: #131c21;
+    --color-ink: #e6edf0;
+    --color-muted: #93a4ad;
+    --color-line: #27343b;
+    --color-energy: #e6a13c;
+    --color-protein: #4fb08c;
+    --color-carb: #6ba3dd;
+    --color-fat: #c08bbc;
+    --color-warn: #e5806f;
+    --color-ok: #6cbb7b;
+  }
+}
+
+html {
+  color-scheme: light dark;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  overscroll-behavior-y: none;
+}
+
+/* Numeric readouts: tabular, tighter, and always aligned. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+}
+
+.field {
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+  color: var(--color-ink);
+  font-size: 15px;
+}
+
+.field:focus-visible,
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-energy);
+  outline-offset: 2px;
+}
+
+/* Ticked capacity gauge — the signature element. */
+.gauge {
+  position: relative;
+  height: 34px;
+  background: var(--color-sunken);
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gauge-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--color-energy);
+  transition: width 260ms ease-out;
+}
+
+.gauge-ticks {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to right,
+    color-mix(in srgb, var(--color-ink) 22%, transparent) 0 1px,
+    transparent 1px 10%
+  );
+  pointer-events: none;
+}
+
+.gauge-over {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--color-warn);
+}
+
+.bar {
+  height: 6px;
+  background: var(--color-sunken);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+  transition: width 220ms ease-out;
+}
+
+.tap {
+  min-height: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Hide scrollbars on the horizontal chip rows without losing scrollability. */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
