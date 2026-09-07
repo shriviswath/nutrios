@@ -27,8 +27,13 @@
   --radius-card: 10px;
 }
 
+/*
+ * Dark overrides are plain custom properties, not a second @theme block:
+ * Tailwind v4 only reads @theme at the top level and silently drops a nested one,
+ * which is exactly how dark mode shipped broken the first time.
+ */
 @media (prefers-color-scheme: dark) {
-  @theme {
+  :root {
     --color-bg: #101619;
     --color-surface: #182127;
     --color-sunken: #131c21;
