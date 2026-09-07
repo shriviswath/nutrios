@@ -53,6 +53,10 @@ export const db = new NutriDB();
 /**
  * Seeds the food table once. Existing rows are left alone so user edits are never
  * overwritten; new seed foods added in a later release are inserted on next launch.
+ *
+ * This MUST NOT be called from inside a live query. Dexie runs queriers in a read-only
+ * transaction zone and throws `ReadOnlyError` on any write, which surfaces as a blank
+ * "client-side exception" page. Seeding happens once at start-up via `seedOnce()` instead.
  */
 export async function ensureSeeded(): Promise<void> {
   const existing = await db.foods.count();
@@ -63,4 +67,12 @@ export async function ensureSeeded(): Promise<void> {
   const ids = new Set(await db.foods.toCollection().primaryKeys());
   const missing = SEED_FOODS.filter((f) => !ids.has(f.id));
   if (missing.length) await db.foods.bulkPut(missing);
+}
+
+let seeding: Promise<void> | null = null;
+
+/** Idempotent, safe to call from every mount — the work happens exactly once per page load. */
+export function seedOnce(): Promise<void> {
+  if (!seeding) seeding = ensureSeeded();
+  return seeding;
 }
