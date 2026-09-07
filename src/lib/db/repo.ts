@@ -1,4 +1,4 @@
-import { db, ensureSeeded } from "@/lib/db/db";
+import { db } from "@/lib/db/db";
 import { scaleFood, scaleMacros, sumMacros } from "@/lib/nutrition/scaling";
 import { computeCalorieTarget, computeMacroTargets, fiberTarget } from "@/lib/nutrition/energy";
 import { dateKey, rangeKeys, shiftKey } from "@/lib/utils/date";
@@ -18,7 +18,6 @@ import type {
 /* ------------------------------------------------------------------ profile */
 
 export async function getProfile(): Promise<Profile | undefined> {
-  await ensureSeeded();
   return db.profile.get("me");
 }
 
@@ -73,7 +72,6 @@ export async function applyAdaptedTarget(newTarget: number, profile: Profile, we
 /* -------------------------------------------------------------------- foods */
 
 export async function allFoods(): Promise<Food[]> {
-  await ensureSeeded();
   return db.foods.toArray();
 }
 
