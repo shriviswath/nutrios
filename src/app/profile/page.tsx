@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { Banner, Button, Card, SectionTitle } from "@/components/ui/primitives";
 import { useAnalytics, useLatestWeight, useProfile, useSettings } from "@/lib/hooks";
 import { downloadBackup, importBackup, wipeEverything } from "@/lib/db/backup";
-import { db } from "@/lib/db/db";
+import { db, reinstallSeedFoods, countFoods } from "@/lib/db/db";
+import { isOfflineEnabled, setOfflineEnabled, unregisterEverything } from "@/lib/services/offline";
 import { kcal } from "@/lib/utils/format";
 
 export default function ProfilePage() {
@@ -15,6 +16,13 @@ export default function ProfilePage() {
   const analytics = useAnalytics();
   const fileRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [offline, setOffline] = useState(false);
+  const [foodCount, setFoodCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    setOffline(isOfflineEnabled());
+    countFoods().then(setFoodCount);
+  }, []);
 
   if (!profile || !settings) return <p className="py-10 text-center text-[13px] text-muted">Loading…</p>;
 
@@ -48,12 +56,65 @@ export default function ProfilePage() {
       </Card>
 
       <Card>
+        <SectionTitle>Offline mode</SectionTitle>
+        <label className="flex items-start gap-2 text-[13px]">
+          <input
+            type="checkbox"
+            checked={offline}
+            onChange={async (e) => {
+              setOffline(e.target.checked);
+              await setOfflineEnabled(e.target.checked);
+              setStatus(e.target.checked ? "Offline cache enabled." : "Offline cache removed.");
+            }}
+          />
+          <span>
+            Cache the app itself so it opens without a connection. Your diary already works offline either way — this
+            only covers the page and its scripts. Turn it off and reload if the app ever starts behaving strangely
+            after an update.
+          </span>
+        </label>
+        <div className="mt-3">
+          <Button
+            size="sm"
+            onClick={async () => {
+              await unregisterEverything();
+              setStatus("Offline cache and service workers cleared. Reload to fetch a fresh copy.");
+            }}
+          >
+            Clear cached app files
+          </Button>
+        </div>
+      </Card>
+
+      <Card>
         <SectionTitle>Your data</SectionTitle>
         <p className="text-[13px] text-muted">
           Everything lives in this browser's storage. Clearing site data wipes it, so export a backup now and then —
           especially before switching phones.
         </p>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 mb-3 flex items-center gap-3 rounded-lg border border-line bg-sunken px-3 py-2.5">
+          <div className="flex-1">
+            <p className="text-[13px] font-medium">Food list</p>
+            <p className="text-[12px] text-muted">
+              {foodCount !== null ? (
+                foodCount < 247
+                  ? <span className="text-warn">{foodCount} foods on device — this build ships 247. Tap Reinstall to sync.</span>
+                  : <span>{foodCount} foods on device.</span>
+              ) : "Counting…"}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={async () => {
+              const n = await reinstallSeedFoods();
+              setFoodCount(n);
+              setStatus(`Food list reinstalled — ${n} foods available.`);
+            }}
+          >
+            Reinstall
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2">
           <Button onClick={() => downloadBackup()}>Export backup</Button>
           <Button onClick={() => fileRef.current?.click()}>Restore backup</Button>
           <Button
