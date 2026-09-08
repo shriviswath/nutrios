@@ -59,14 +59,45 @@ export const db = new NutriDB();
  * "client-side exception" page. Seeding happens once at start-up via `seedOnce()` instead.
  */
 export async function ensureSeeded(): Promise<void> {
-  const existing = await db.foods.count();
-  if (existing === 0) {
+  const storedCount = await db.foods.count();
+
+  // Fast path: fresh install.
+  if (storedCount === 0) {
     await db.foods.bulkPut(SEED_FOODS);
     return;
   }
-  const ids = new Set(await db.foods.toCollection().primaryKeys());
-  const missing = SEED_FOODS.filter((f) => !ids.has(f.id));
-  if (missing.length) await db.foods.bulkPut(missing);
+
+  // Upgrade path: any time the build ships more seed foods than the device has,
+  // insert only the new ids. This is what makes "Sambar not found" impossible after
+  // deploying a bigger food list — the diff runs automatically on the next page load.
+  const storedIds = new Set(await db.foods.toCollection().primaryKeys());
+  const missing = SEED_FOODS.filter((f) => !storedIds.has(f.id));
+  if (missing.length > 0) {
+    await db.foods.bulkPut(missing);
+    console.info(`[nutri-os] seeder: inserted ${missing.length} new foods (${storedCount} → ${storedCount + missing.length})`);
+  }
+}
+
+/**
+ * Force-reinstalls the seed list, keeping anything the user has done to those rows
+ * (favourites, edited notes) and leaving custom foods and recipes untouched.
+ *
+ * Exists because a half-written food table is invisible from the UI: search simply returns
+ * "no matches" for a food that plainly should be there, which looks like a search bug rather
+ * than an empty database.
+ */
+export async function reinstallSeedFoods(): Promise<number> {
+  const existing = await db.foods.bulkGet(SEED_FOODS.map((f) => f.id));
+  const merged = SEED_FOODS.map((seed, i) => {
+    const current = existing[i];
+    return current ? { ...seed, favorite: current.favorite, notes: current.notes ?? seed.notes } : seed;
+  });
+  await db.foods.bulkPut(merged);
+  return merged.length;
+}
+
+export async function countFoods(): Promise<number> {
+  return db.foods.count();
 }
 
 let seeding: Promise<void> | null = null;
