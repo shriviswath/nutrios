@@ -1,14 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { DateStrip } from "@/components/home/DateStrip";
 import { EnergyPanel } from "@/components/home/EnergyPanel";
 import { MealSection } from "@/components/home/MealSection";
+import { StreakChip, StreakNudge } from "@/components/home/Streaks";
 import { AddFoodSheet } from "@/components/log/AddFoodSheet";
 import { ExerciseSheet } from "@/components/log/ExerciseSheet";
 import { Button } from "@/components/ui/primitives";
-import { useAnalytics, useDay, useExercises, useLatestWeight, useProfile, useSettings } from "@/lib/hooks";
+import {
+  useAnalytics,
+  useDay,
+  useExercises,
+  useFoodsById,
+  useGamification,
+  useLatestWeight,
+  useProfile,
+  useSettings,
+} from "@/lib/hooks";
 import { copyDay, deleteExercise } from "@/lib/db/repo";
+import { guessMeal } from "@/lib/meals";
+import { gradeBreakdown, rateLogged } from "@/lib/nutrition/quality";
 import { MEAL_SLOTS, type MealSlot } from "@/lib/types";
 import { dateKey, formatDay, isToday, shiftKey } from "@/lib/utils/date";
 import { kcal } from "@/lib/utils/format";
@@ -24,6 +37,17 @@ export default function HomePage() {
   const exercises = useExercises(date);
   const latestWeight = useLatestWeight();
   const analytics = useAnalytics();
+  const foodsById = useFoodsById();
+  const game = useGamification();
+
+  const quality = useMemo(
+    () =>
+      gradeBreakdown(
+        (day?.logs ?? []).map((l) => ({ kcal: l.macros.kcal, grade: rateLogged(l.macros, l.quantity, foodsById.get(l.foodId)).grade })),
+      ),
+    [day, foodsById],
+  );
+  const loggedDates = useMemo(() => new Set((game?.days ?? []).filter((d) => d.entries > 0).map((d) => d.date)), [game]);
 
   if (!profile || !settings || !day) {
     return <p className="py-10 text-center text-[13px] text-muted">Loading today…</p>;
@@ -33,7 +57,7 @@ export default function HomePage() {
 
   return (
     <div className="space-y-4">
-      <header className="flex items-center justify-between">
+      <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight">{formatDay(date)}</h1>
           <p className="text-[13px] text-muted">
@@ -41,22 +65,18 @@ export default function HomePage() {
             {analytics?.estimate.ready ? ` · maintenance ≈ ${kcal(analytics.estimate.value)} kcal` : ""}
           </p>
         </div>
-        <div className="flex items-center gap-1">
-          <button className="tap px-2 text-muted" onClick={() => setDate(shiftKey(date, -1))} aria-label="Previous day">
-            ‹
-          </button>
-          <button
-            className="tap px-2 text-muted disabled:opacity-30"
-            onClick={() => setDate(shiftKey(date, 1))}
-            disabled={isToday(date)}
-            aria-label="Next day"
-          >
-            ›
-          </button>
-        </div>
+        {game && (
+          <Link href="/progress#streaks" aria-label="Streaks and badges">
+            <StreakChip streaks={game.streaks} />
+          </Link>
+        )}
       </header>
 
-      <EnergyPanel totals={day.totals} settings={settings} exerciseKcal={day.exerciseKcal} />
+      <DateStrip selected={date} onSelect={setDate} loggedDates={loggedDates} />
+
+      {game && isToday(date) && <StreakNudge streaks={game.streaks} />}
+
+      <EnergyPanel totals={day.totals} settings={settings} exerciseKcal={day.exerciseKcal} quality={quality} />
 
       {analytics?.recommendation.action === "increase" || analytics?.recommendation.action === "decrease" ? (
         <Link href="/insights" className="block rounded-lg border-l-2 border-energy bg-surface px-3 py-2.5 text-[13px]">
@@ -66,7 +86,15 @@ export default function HomePage() {
       ) : null}
 
       {MEAL_SLOTS.map((meal) => (
-        <MealSection key={meal} meal={meal} entries={day.byMeal[meal]} date={date} onAdd={setAddTo} />
+        <MealSection
+          key={meal}
+          meal={meal}
+          entries={day.byMeal[meal]}
+          date={date}
+          dailyTarget={settings.calorieTarget}
+          foodsById={foodsById}
+          onAdd={setAddTo}
+        />
       ))}
 
       <section className="card p-4">
@@ -107,32 +135,26 @@ export default function HomePage() {
             label={analytics?.estimate.ready ? "Estimated expenditure" : "Estimated expenditure (formula)"}
             value={`${kcal(analytics?.estimate.value)} kcal`}
           />
-          <Row
-            label="Balance"
-            value={`${kcal(day.totals.kcal - (analytics?.estimate.value ?? 0))} kcal`}
-            emphasis
-          />
+          <Row label="Balance" value={`${kcal(day.totals.kcal - (analytics?.estimate.value ?? 0))} kcal`} emphasis />
         </dl>
         <p className="mt-2 text-[12px] text-muted">
           Expenditure already includes normal daily movement. A negative balance is a deficit for the day.
         </p>
       </section>
 
-      <div className="flex gap-2">
-        <Button
-          className="flex-1"
-          onClick={async () => {
-            const copied = await copyDay(shiftKey(date, -1), date);
-            if (!copied) alert("Nothing was logged yesterday.");
-          }}
-        >
-          Copy the whole of yesterday
-        </Button>
-      </div>
+      <Button
+        className="w-full"
+        onClick={async () => {
+          const copied = await copyDay(shiftKey(date, -1), date);
+          if (!copied) alert("Nothing was logged the day before.");
+        }}
+      >
+        Copy the whole of the previous day
+      </Button>
 
       <button
         type="button"
-        onClick={() => setAddTo(guessMeal())}
+        onClick={() => setAddTo(isToday(date) ? guessMeal() : "lunch")}
         className="fixed bottom-[76px] right-4 z-30 rounded-full bg-ink px-5 py-3.5 text-[14px] font-medium text-bg shadow-lg"
       >
         + Add food
@@ -151,13 +173,4 @@ function Row({ label, value, emphasis }: { label: string; value: string; emphasi
       <dd className={`num ${emphasis ? "font-medium" : ""}`}>{value}</dd>
     </div>
   );
-}
-
-/** Opens the sheet on the meal you are most likely logging right now. */
-function guessMeal(): MealSlot {
-  const hour = new Date().getHours();
-  if (hour < 10) return "breakfast";
-  if (hour < 15) return "lunch";
-  if (hour < 18) return "snacks";
-  return "dinner";
 }
