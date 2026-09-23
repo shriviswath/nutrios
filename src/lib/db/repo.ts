@@ -1,5 +1,5 @@
 import { db } from "@/lib/db/db";
-import { scaleFood, scaleMacros, sumMacros } from "@/lib/nutrition/scaling";
+import { scaleFood, scaleMacros, scaleMicros, sumMacros } from "@/lib/nutrition/scaling";
 import { computeCalorieTarget, computeMacroTargets, fiberTarget } from "@/lib/nutrition/energy";
 import { dateKey, rangeKeys, shiftKey } from "@/lib/utils/date";
 import { uid } from "@/lib/utils/id";
@@ -134,9 +134,20 @@ export async function updateLogQuantity(id: number, quantity: number): Promise<v
   const entry = await db.logs.get(id);
   if (!entry) return;
   const food = await db.foods.get(entry.foodId);
-  if (!food) return;
-  const { macros, micros } = scaleFood(food, quantity);
-  await db.logs.update(id, { quantity, macros, micros });
+  if (food) {
+    const { macros, micros } = scaleFood(food, quantity);
+    await db.logs.update(id, { quantity, macros, micros });
+    return;
+  }
+  // The food was deleted, but the entry carries its own snapshot: rescale that instead of
+  // silently ignoring the edit.
+  if (entry.quantity <= 0) return;
+  const per100 = scaleMacros(entry.macros, (100 / entry.quantity) * 100);
+  await db.logs.update(id, {
+    quantity,
+    macros: scaleMacros(per100, quantity),
+    micros: scaleMicros(scaleMicros(entry.micros, (100 / entry.quantity) * 100), quantity),
+  });
 }
 
 export async function deleteLog(id: number): Promise<void> {
