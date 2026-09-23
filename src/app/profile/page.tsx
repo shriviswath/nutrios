@@ -5,7 +5,9 @@ import { ProfileForm } from "@/components/profile/ProfileForm";
 import { Banner, Button, Card, SectionTitle } from "@/components/ui/primitives";
 import { useAnalytics, useLatestWeight, useProfile, useSettings } from "@/lib/hooks";
 import { downloadBackup, importBackup, wipeEverything } from "@/lib/db/backup";
-import { db, reinstallSeedFoods, countFoods } from "@/lib/db/db";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db, reinstallSeedFoods } from "@/lib/db/db";
+import { SEED_FOODS } from "@/data/foods";
 import { isOfflineEnabled, setOfflineEnabled, unregisterEverything } from "@/lib/services/offline";
 import { kcal } from "@/lib/utils/format";
 
@@ -17,11 +19,17 @@ export default function ProfilePage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
-  const [foodCount, setFoodCount] = useState<number | null>(null);
+  // Live, so the number updates the moment seeding or a reinstall finishes.
+  const foodCount = useLiveQuery(() => db.foods.count(), [], null);
+  const seedIds = new Set(SEED_FOODS.map((f) => f.id));
+  const seedPresent = useLiveQuery(
+    async () => (await db.foods.toCollection().primaryKeys()).filter((id) => seedIds.has(id as string)).length,
+    [],
+    null,
+  );
 
   useEffect(() => {
     setOffline(isOfflineEnabled());
-    countFoods().then(setFoodCount);
   }, []);
 
   if (!profile || !settings) return <p className="py-10 text-center text-[13px] text-muted">Loading…</p>;
@@ -96,18 +104,21 @@ export default function ProfilePage() {
           <div className="flex-1">
             <p className="text-[13px] font-medium">Food list</p>
             <p className="text-[12px] text-muted">
-              {foodCount !== null ? (
-                foodCount < 247
-                  ? <span className="text-warn">{foodCount} foods on device — this build ships 247. Tap Reinstall to sync.</span>
-                  : <span>{foodCount} foods on device.</span>
-              ) : "Counting…"}
+              {foodCount === null || seedPresent === null ? (
+                "Counting…"
+              ) : seedPresent < SEED_FOODS.length ? (
+                <span className="text-warn">
+                  {seedPresent} of {SEED_FOODS.length} built-in foods on this device. Tap Reinstall to sync.
+                </span>
+              ) : (
+                <span>{foodCount} foods on device ({SEED_FOODS.length} built-in).</span>
+              )}
             </p>
           </div>
           <Button
             size="sm"
             onClick={async () => {
               const n = await reinstallSeedFoods();
-              setFoodCount(n);
               setStatus(`Food list reinstalled — ${n} foods available.`);
             }}
           >
