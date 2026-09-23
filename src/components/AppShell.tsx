@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useProfile } from "@/lib/hooks";
+import { seedOnce } from "@/lib/db/db";
+import { isOfflineEnabled, registerServiceWorker } from "@/lib/services/offline";
 
 const NAV = [
   { href: "/", label: "Home", icon: HomeIcon },
@@ -23,12 +25,15 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (profile === null && !onboarding) router.replace("/onboarding");
   }, [profile, onboarding, router]);
 
+  // Seed the food table once per page load. This must live outside any live query (Dexie
+  // queriers are read-only) — and it must be called from somewhere, or a fresh install has an
+  // empty food list and every search returns "No matches".
   useEffect(() => {
-    if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
-      navigator.serviceWorker.register("/sw.js").catch(() => {
-        /* offline caching is a bonus, not a requirement */
-      });
-    }
+    seedOnce().catch((err) => console.error("[nutri-os] seeding failed", err));
+  }, []);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production" && isOfflineEnabled()) void registerServiceWorker();
   }, []);
 
   if (profile === undefined) {
