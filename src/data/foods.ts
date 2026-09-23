@@ -1,5 +1,6 @@
 import type { Food, Macros, Micros, Portion, Unit } from "@/lib/types";
 import { slug } from "@/lib/utils/id";
+import { MORE_SEEDS } from "@/data/foods-more";
 
 /**
  * Seed food database, weighted towards South Indian home and mess food.
@@ -13,7 +14,7 @@ import { slug } from "@/lib/utils/id";
  * Portion syntax: "label=grams" separated by "|". The first portion is the default.
  * `null` means the value is genuinely unknown and must not be displayed as zero.
  */
-type Seed = [
+export type Seed = [
   name: string,
   category: string,
   kcal: number,
@@ -235,6 +236,6 @@ function toFood(seed: Seed): Food {
   };
 }
 
-export const SEED_FOODS: Food[] = SEEDS.map(toFood);
+export const SEED_FOODS: Food[] = [...SEEDS, ...MORE_SEEDS].map(toFood);
 
 export const FOOD_CATEGORIES = Array.from(new Set(SEED_FOODS.map((f) => f.category))).sort();
