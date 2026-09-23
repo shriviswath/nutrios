@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Chart } from "@/components/ui/Chart";
 import { Banner, Button, Card, EmptyState, SectionTitle } from "@/components/ui/primitives";
-import { useAnalytics, useWeights } from "@/lib/hooks";
+import { useAnalytics, useGamification, useWeights } from "@/lib/hooks";
+import { BadgeGrid, StreakSummary } from "@/components/home/Streaks";
 import { deleteWeight, saveWeight } from "@/lib/db/repo";
 import { formatRate } from "@/lib/nutrition/adaptive";
 import { dateKey, formatDay } from "@/lib/utils/date";
@@ -12,6 +13,7 @@ import { kg, signed } from "@/lib/utils/format";
 export default function ProgressPage() {
   const analytics = useAnalytics();
   const weights = useWeights();
+  const game = useGamification();
   const [value, setValue] = useState("");
   const [date, setDate] = useState(dateKey());
 
@@ -117,6 +119,16 @@ export default function ProgressPage() {
           Sustained changes above about 1 kg per week are usually water or under-eating rather than fat. If this is
           deliberate, it is worth doing under medical supervision.
         </Banner>
+      )}
+
+      {game && (
+        <section id="streaks" className="card scroll-mt-4 p-4">
+          <SectionTitle>Streaks &amp; badges</SectionTitle>
+          <StreakSummary streaks={game.streaks} />
+          <div className="mt-4">
+            <BadgeGrid badges={game.badges} />
+          </div>
+        </section>
       )}
 
       <Card>
