@@ -10,7 +10,7 @@ export interface AmountPreset {
  * a tumbler (~150 ml), a glass (250 ml), a bottle (500 ml / 1 L).
  */
 const ML: number[] = [50, 100, 150, 200, 250, 300, 500, 750, 1000];
-const G: number[] = [25, 50, 75, 100, 150, 200, 250, 300, 500];
+const G: number[] = [5, 10, 25, 50, 75, 100, 150, 200, 250, 300, 500];
 
 export function amountPresets(unit: Unit): AmountPreset[] {
   const values = unit === "ml" ? ML : G;
