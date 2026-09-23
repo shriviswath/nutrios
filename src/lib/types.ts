@@ -7,12 +7,16 @@
 export type Sex = "male" | "female";
 export type Goal = "lose" | "maintain" | "gain";
 export type Unit = "g" | "ml";
-export type MealSlot = "breakfast" | "lunch" | "snacks" | "dinner";
+/**
+ * Five eating occasions. `snacks` is the evening snack: the key predates the morning slot and is
+ * kept so every existing diary entry stays where it was.
+ */
+export type MealSlot = "breakfast" | "morning_snack" | "lunch" | "snacks" | "dinner";
 
 /** Where a number came from. Shown in the UI so estimates are never mistaken for data. */
 export type Provenance = "database" | "estimated" | "ai" | "user";
 
-export const MEAL_SLOTS: MealSlot[] = ["breakfast", "lunch", "snacks", "dinner"];
+export const MEAL_SLOTS: MealSlot[] = ["breakfast", "morning_snack", "lunch", "snacks", "dinner"];
 
 export const ACTIVITY_LEVELS = {
   sedentary: { factor: 1.2, label: "Sedentary", hint: "Desk work, little movement" },
