@@ -94,3 +94,16 @@ test("badges unlock from the diary and report progress when locked", () => {
   assert.ok(get("green-plate").earned);
   assert.ok(!get("weigh-10").earned);
 });
+
+import { parseMealText } from "../src/lib/nlp/parseMealText";
+
+test("seeds are logged by the teaspoon", () => {
+  for (const name of ["Chia seeds", "Flax seeds (alsi)", "Pumpkin seeds", "Sunflower seeds", "Sesame seeds (ellu / til)", "Sabja (basil) seeds"]) {
+    const food = byName.get(name);
+    assert.ok(food, name);
+    assert.equal(food.portions[food.defaultPortionIndex ?? 0].label, "1 tsp", name);
+  }
+  const [chia] = parseMealText("2 tsp chia seeds", SEED_FOODS);
+  assert.equal(chia.food?.name, "Chia seeds");
+  assert.equal(chia.amountBase, 8);
+});
