@@ -11,6 +11,9 @@ import { applySavedMeal } from "@/lib/db/repo";
 import { db, reinstallSeedFoods } from "@/lib/db/db";
 import { useLiveQuery } from "dexie-react-hooks";
 import { rankFoods } from "@/lib/search";
+import { rateFood } from "@/lib/nutrition/quality";
+import { MEAL_LABELS } from "@/lib/meals";
+import { QualityDot } from "@/components/ui/Quality";
 import type { Food, MealSlot } from "@/lib/types";
 
 type Mode = "search" | "text" | "barcode" | "custom";
@@ -52,13 +55,13 @@ export function AddFoodSheet({
   };
 
   return (
-    <Sheet open={open} onClose={close} title={selected ? "Add food" : `Add to ${meal}`}>
+    <Sheet open={open} onClose={close} title={selected ? "Add food" : `Add to ${MEAL_LABELS[meal].toLowerCase()}`}>
       {selected ? (
         <div className="space-y-3">
           <button type="button" onClick={() => setSelected(null)} className="text-[13px] text-muted">
             ← Back to search
           </button>
-          <PortionEditor food={selected} date={date} meal={meal} onDone={close} />
+          <PortionEditor key={selected.id} food={selected} date={date} meal={meal} onDone={close} onSwap={setSelected} />
         </div>
       ) : (
         <div className="space-y-3">
@@ -149,11 +152,14 @@ export function AddFoodSheet({
                         onClick={() => setSelected(food)}
                         className="tap flex w-full items-center justify-between gap-3 py-2.5 text-left"
                       >
-                        <span className="min-w-0">
+                        <span className="flex min-w-0 items-center gap-2.5">
+                          <QualityDot grade={rateFood(food).grade} />
+                          <span className="min-w-0">
                           <span className="block truncate font-medium">{food.name}</span>
                           <span className="block truncate text-[12px] text-muted">
                             {food.portions[0]?.label} · {food.category}
                             {reason === "recent" ? " · recent" : reason === "frequent" ? " · often eaten" : ""}
+                          </span>
                           </span>
                         </span>
                         <span className="num shrink-0 text-[13px] text-muted">
