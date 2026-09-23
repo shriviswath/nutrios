@@ -216,6 +216,16 @@ export const MORE_SEEDS: Seed[] = [
   ["Cashews", "Snacks", 553, 18.2, 30.2, 43.9, 3.3, "10 cashews=15|1 handful=30"],
   ["Walnuts", "Snacks", 654, 15.2, 13.7, 65.2, 6.7, "5 halves=10|1 handful=30"],
 
+  // ---- Seeds (per 100 g; logged by the teaspoon — 1 tsp is the default portion) ----
+  ["Chia seeds", "Seeds", 486, 16.5, 42.1, 30.7, 34.4, "1 tsp=4|1 tbsp=12|100 g=100"],
+  ["Flax seeds (alsi)", "Seeds", 534, 18.3, 28.9, 42.2, 27.3, "1 tsp=3|1 tbsp whole=10|1 tbsp ground=7|100 g=100"],
+  ["Pumpkin seeds", "Seeds", 559, 30.2, 10.7, 49.1, 6.0, "1 tsp=3|1 tbsp=9|1 handful=30"],
+  ["Sunflower seeds", "Seeds", 584, 20.8, 20.0, 51.5, 8.6, "1 tsp=3|1 tbsp=9|1 handful=30"],
+  ["Sesame seeds (ellu / til)", "Seeds", 573, 17.7, 23.4, 49.7, 11.8, "1 tsp=3|1 tbsp=9|100 g=100"],
+  ["Hemp seeds, hulled", "Seeds", 553, 31.6, 8.7, 48.8, 4.0, "1 tsp=3|1 tbsp=10|100 g=100"],
+  ["Watermelon seeds (magaz)", "Seeds", 557, 28.3, 15.3, 47.4, null, "1 tsp=3|1 tbsp=9|1 handful=30"],
+  ["Sabja (basil) seeds", "Seeds", 432, 15.6, 58.7, 14.9, null, "1 tsp=4|1 tbsp=13|100 g=100"],
+
   // ---- Vegetables ----
   ["Broccoli", "Vegetables", 34, 2.8, 6.6, 0.4, 2.6, "1 cup=90|100 g=100"],
   ["Cauliflower", "Vegetables", 25, 1.9, 5.0, 0.3, 2.0, "1 cup=100|100 g=100"],
