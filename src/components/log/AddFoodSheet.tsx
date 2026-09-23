@@ -8,6 +8,8 @@ import { BarcodePanel } from "@/components/log/BarcodePanel";
 import { CustomFoodForm } from "@/components/log/CustomFoodForm";
 import { useFoods, useSavedMeals, useUsage } from "@/lib/hooks";
 import { applySavedMeal } from "@/lib/db/repo";
+import { db, reinstallSeedFoods } from "@/lib/db/db";
+import { useLiveQuery } from "dexie-react-hooks";
 import { rankFoods } from "@/lib/search";
 import type { Food, MealSlot } from "@/lib/types";
 
@@ -32,6 +34,8 @@ export function AddFoodSheet({
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Food | null>(null);
+  // `undefined` while loading, so an empty table is never confused with "still opening".
+  const foodCount = useLiveQuery(() => db.foods.count(), []);
 
   const results = useMemo(() => {
     let pool = foods;
@@ -117,6 +121,16 @@ export function AddFoodSheet({
                     ))}
                   </ul>
                 )
+              ) : foodCount === 0 ? (
+                <EmptyState title="Food list is empty">
+                  The built-in food list hasn't been installed on this device yet, so search has nothing to look
+                  through.
+                  <span className="mt-3 block">
+                    <Button size="sm" onClick={() => reinstallSeedFoods()}>
+                      Install built-in foods
+                    </Button>
+                  </span>
+                </EmptyState>
               ) : results.length === 0 ? (
                 <EmptyState title="No matches">
                   Nothing in your food list matches “{query}”. Create it once as a new food and it will be one tap from now on.
